@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BlockFit – Weather Outfit Planner</title>
+  <meta name="description" content="Pick your location, add your closet, and get a weather-ready outfit on your own blocky avatar.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="title-bar">
+    <h1 class="logo">BlockFit</h1>
+    <p class="tagline">Dress for the weather, one block at a time</p>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="mc-btn tab is-active" data-tab="home" type="button">Today</button>
+    <button class="mc-btn tab" data-tab="closet" type="button">Closet <span class="badge" id="closetCount">0</span></button>
+    <button class="mc-btn tab" data-tab="avatar" type="button">Avatar</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- ========== TODAY ========== -->
+    <section id="tab-home" class="panel is-active">
+
+      <div class="card" id="setupCard" hidden>
+        <h2>Quest: Get Set Up</h2>
+        <ul class="checklist" id="setupList"></ul>
+      </div>
+
+      <div class="card">
+        <h2>Location</h2>
+        <form id="locForm" class="row">
+          <input id="cityInput" type="text" placeholder="Search a city…" autocomplete="off" aria-label="City name">
+          <button class="mc-btn" type="submit">Search</button>
+          <button class="mc-btn" type="button" id="geoBtn">📍 Use mine</button>
+        </form>
+        <ul id="locResults" class="results"></ul>
+        <div class="row small-row">
+          <label for="unitsSelect">Units</label>
+          <select id="unitsSelect">
+            <option value="imperial">°F · mph · in</option>
+            <option value="metric">°C · km/h · mm</option>
+          </select>
+          <span id="locCurrent" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" id="weatherCard">
+          <div class="card-head">
+            <h2>Weather</h2>
+            <button class="mc-btn mini" id="refreshBtn" type="button" title="Refresh weather">↻</button>
+          </div>
+          <div id="weatherBody"><p class="muted">Pick a location to see today's weather.</p></div>
+        </div>
+
+        <div class="card" id="outfitCard">
+          <div class="card-head"><h2>Today's Outfit</h2></div>
+          <div class="outfit-layout">
+            <div class="avatar-stage">
+              <canvas id="outfitCanvas" aria-label="Your avatar wearing today's outfit"></canvas>
+            </div>
+            <ul id="outfitList" class="outfit-list"></ul>
+          </div>
+          <ul id="outfitNotes" class="notes"></ul>
+          <div class="row">
+            <button class="mc-btn primary" id="shuffleBtn" type="button">🎲 New outfit</button>
+            <button class="mc-btn" id="saveImgBtn" type="button">💾 Save image</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CLOSET ========== -->
+    <section id="tab-closet" class="panel">
+      <div class="card">
+        <div class="card-head">
+          <h2>Your Closet</h2>
+          <button class="mc-btn primary" id="addItemBtn" type="button">+ Add item</button>
+        </div>
+        <div class="row small-row">
+          <label for="filterCat">Show</label>
+          <select id="filterCat"></select>
+          <button class="mc-btn mini" id="exportBtn" type="button">⬇ Export</button>
+          <button class="mc-btn mini" id="importBtn" type="button">⬆ Import</button>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="muted" id="closetEmpty">Your closet is empty. Add photos of your clothes — a flat lay on a plain background works best.</p>
+        <div id="closetGrid" class="closet-grid"></div>
+        <p class="muted small">Photos are saved only in this browser. Use Export to back them up or move to another device.</p>
+      </div>
+    </section>
+
+    <!-- ========== AVATAR ========== -->
+    <section id="tab-avatar" class="panel">
+      <div class="grid-2">
+        <div class="card">
+          <h2>Your Avatar</h2>
+          <div class="avatar-stage"><canvas id="avatarCanvas" aria-label="Avatar preview"></canvas></div>
+          <p class="center" id="avatarNameLabel"></p>
+        </div>
+        <div class="card">
+          <h2>Customize</h2>
+          <label class="field"><span>Name</span><input id="avatarName" maxlength="16" placeholder="Steve"></label>
+          <div class="field"><span>Skin</span><div class="swatches" id="skinSwatches"></div></div>
+          <div class="field"><span>Hair color</span><div class="swatches" id="hairSwatches"></div></div>
+          <label class="field"><span>Hair style</span>
+            <select id="hairStyle">
+              <option value="short">Short</option>
+              <option value="long">Long</option>
+              <option value="spiky">Spiky</option>
+              <option value="ponytail">Ponytail</option>
+              <option value="bald">Bald</option>
+            </select>
+          </label>
+          <div class="field"><span>Eyes</span><div class="swatches" id="eyeSwatches"></div></div>
+          <p class="muted small">Changes save automatically.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== ADD / EDIT ITEM ========== -->
+  <dialog id="itemDialog">
+    <form id="itemForm" class="dialog-body">
+      <h2 id="dialogTitle">Add to Closet</h2>
+
+      <div class="photo-drop">
+        <img id="itemPreview" alt="Preview of the selected clothing photo" hidden>
+        <label class="mc-btn" for="itemPhoto">📷 Choose photo</label>
+        <input id="itemPhoto" type="file" accept="image/*" hidden>
+      </div>
+
+      <label class="field"><span>Name</span><input id="itemName" maxlength="40" placeholder="Blue hoodie"></label>
+      <label class="field"><span>Type</span><select id="itemCategory"></select></label>
+
+      <div class="field" id="warmthField">
+        <span>Warmth: <b id="warmthLabel"></b></span>
+        <input id="itemWarmth" type="range" min="1" max="5" value="3">
+        <small class="muted">1 = shorts / tank · 3 = jeans / hoodie · 5 = insulated / wool</small>
+      </div>
+
+      <label class="field check" id="waterproofField">
+        <input id="itemWaterproof" type="checkbox"><span>Waterproof / water-resistant</span>
+      </label>
+
+      <div class="row end">
+        <button class="mc-btn" type="button" id="cancelItem">Cancel</button>
+        <button class="mc-btn" type="button" id="saveAnotherBtn">Save + add another</button>
+        <button class="mc-btn primary" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
